@@ -2,20 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MBM</title>
   <link rel="icon" type="image/png" href="mbm-logo.png">
   <link rel="apple-touch-icon" href="mbm-logo.png">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --aku-size: 120px;
+      --wormhole-size: 140px;
+    }
+
+    /* Scale down on small screens */
+    @media (max-width: 480px), (max-height: 480px) {
+      :root {
+        --aku-size: 80px;
+        --wormhole-size: 100px;
+      }
+    }
+    @media (max-width: 360px), (max-height: 360px) {
+      :root {
+        --aku-size: 64px;
+        --wormhole-size: 80px;
+      }
+    }
+
+    html {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
 
     body {
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       cursor: default;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       background: #0a0a0a;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* ── Background ── */
@@ -38,8 +67,10 @@
       justify-content: center;
       background: rgba(0,0,0,0.7);
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       cursor: pointer;
       transition: opacity 0.8s ease;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
     #start-overlay.hidden {
       opacity: 0;
@@ -77,8 +108,8 @@
     /* ── Wormhole ── */
     .wormhole {
       position: fixed;
-      width: 140px;
-      height: 140px;
+      width: var(--wormhole-size);
+      height: var(--wormhole-size);
       border-radius: 50%;
       pointer-events: none;
       z-index: 10;
@@ -119,8 +150,8 @@
     }
     #aku-container {
       position: relative;
-      width: 120px;
-      height: 120px;
+      width: var(--aku-size);
+      height: var(--aku-size);
     }
     #aku-glow {
       position: absolute;
@@ -135,8 +166,8 @@
       50% { transform: scale(1.15); opacity: 1; }
     }
     #aku-img {
-      width: 120px;
-      height: 120px;
+      width: var(--aku-size);
+      height: var(--aku-size);
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid rgba(255,180,200,0.6);
@@ -164,21 +195,32 @@
     }
     #enjoy-overlay img {
       max-width: min(80vw, 500px);
-      max-height: 60vh;
+      max-height: 50vh;
+      max-height: 50dvh;
       border-radius: 16px;
       box-shadow: 0 0 60px rgba(255,100,50,0.4);
       animation: enjoyBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     #enjoy-overlay h2 {
       color: #fff;
-      font-size: clamp(1.5rem, 4vw, 2.5rem);
-      margin-top: 24px;
+      font-size: clamp(1.2rem, 4vw, 2.5rem);
+      margin-top: 16px;
       text-shadow: 0 0 30px rgba(255,200,50,0.5);
+      text-align: center;
+      padding: 0 16px;
     }
     #enjoy-overlay p {
       color: rgba(255,255,255,0.5);
-      margin-top: 12px;
-      font-size: 1rem;
+      margin-top: 8px;
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      text-align: center;
+      padding: 0 16px;
+    }
+    /* Landscape phone: horizontal layout */
+    @media (max-height: 440px) and (orientation: landscape) {
+      #enjoy-overlay { flex-direction: row; gap: 24px; padding: 12px; }
+      #enjoy-overlay img { max-height: 80vh; max-height: 80dvh; max-width: 40vw; }
+      #enjoy-overlay h2 { margin-top: 0; }
     }
     @keyframes enjoyBounce {
       0% { transform: scale(0) rotate(-10deg); opacity: 0; }
@@ -263,11 +305,25 @@
     const wormholeEntry = document.getElementById('wormhole-entry');
     const wormholeExit = document.getElementById('wormhole-exit');
 
-    const AKU_SIZE = 120;
-    const MARGIN = 20;
+    const AKU_SIZE = getComputedAkuSize();
+    const WORMHOLE_SIZE = getComputedWormholeSize();
+    const MARGIN = 10;
 
-    function getMaxX() { return window.innerWidth - AKU_SIZE - MARGIN; }
-    function getMaxY() { return window.innerHeight - AKU_SIZE - MARGIN; }
+    function getComputedAkuSize() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--aku-size'));
+    }
+    function getComputedWormholeSize() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wormhole-size'));
+    }
+    function akuSize() {
+      return getComputedAkuSize();
+    }
+    function whSize() {
+      return getComputedWormholeSize();
+    }
+
+    function getMaxX() { return window.innerWidth - akuSize() - MARGIN; }
+    function getMaxY() { return window.innerHeight - akuSize() - MARGIN; }
 
     function randomPos() {
       return {
@@ -397,8 +453,9 @@
       if (caught || !akuVisible) return;
 
       // Show entry wormhole at current position
-      wormholeEntry.style.left = (akuX + AKU_SIZE / 2 - 70) + 'px';
-      wormholeEntry.style.top = (akuY + AKU_SIZE / 2 - 70) + 'px';
+      const wh = whSize();
+      wormholeEntry.style.left = (akuX + akuSize() / 2 - wh / 2) + 'px';
+      wormholeEntry.style.top = (akuY + akuSize() / 2 - wh / 2) + 'px';
       wormholeEntry.classList.add('open');
 
       // Hide aku into wormhole
@@ -409,8 +466,9 @@
         const newPos = farAwayPos();
 
         // Show exit wormhole at far-away position
-        wormholeExit.style.left = (newPos.x + AKU_SIZE / 2 - 70) + 'px';
-        wormholeExit.style.top = (newPos.y + AKU_SIZE / 2 - 70) + 'px';
+        const wh2 = whSize();
+        wormholeExit.style.left = (newPos.x + akuSize() / 2 - wh2 / 2) + 'px';
+        wormholeExit.style.top = (newPos.y + akuSize() / 2 - wh2 / 2) + 'px';
         wormholeExit.classList.add('open');
 
         // Close entry wormhole
@@ -449,8 +507,8 @@
     document.addEventListener('mousemove', (e) => {
       if (!akuVisible || caught) return;
 
-      const dx = akuX + AKU_SIZE / 2 - e.clientX;
-      const dy = akuY + AKU_SIZE / 2 - e.clientY;
+      const dx = akuX + akuSize() / 2 - e.clientX;
+      const dy = akuY + akuSize() / 2 - e.clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < 200) {
@@ -473,8 +531,8 @@
     document.addEventListener('touchmove', (e) => {
       if (!akuVisible || caught || !e.touches.length) return;
       const t = e.touches[0];
-      const dx = akuX + AKU_SIZE / 2 - t.clientX;
-      const dy = akuY + AKU_SIZE / 2 - t.clientY;
+      const dx = akuX + akuSize() / 2 - t.clientX;
+      const dy = akuY + akuSize() / 2 - t.clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 220) {
         let fleeAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * Math.PI * 0.6;
@@ -502,8 +560,9 @@
         const spawnPos = randomPos();
 
         // Show wormhole
-        wormholeExit.style.left = (spawnPos.x + AKU_SIZE / 2 - 70) + 'px';
-        wormholeExit.style.top = (spawnPos.y + AKU_SIZE / 2 - 70) + 'px';
+        const whS = whSize();
+        wormholeExit.style.left = (spawnPos.x + akuSize() / 2 - whS / 2) + 'px';
+        wormholeExit.style.top = (spawnPos.y + akuSize() / 2 - whS / 2) + 'px';
         wormholeExit.classList.add('open');
 
         setTimeout(() => {
@@ -570,12 +629,14 @@
       }, 600);
     }
 
-    // ── Confetti shower ──
+    // ── Confetti shower (scaled for device) ──
     function spawnConfetti() {
       const colors = ['#ff4081', '#ff6e40', '#ffd740', '#64ffda', '#448aff', '#e040fb', '#76ff03', '#ff1744'];
-      const shapes = ['■', '●', '▲', '★', '♦', '❤'];
+      const isMobile = window.innerWidth < 600;
+      const count1 = isMobile ? 80 : 150;
+      const count2 = isMobile ? 40 : 80;
 
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < count1; i++) {
         setTimeout(() => {
           const el = document.createElement('div');
           el.className = 'confetti';
@@ -597,7 +658,7 @@
 
       // Second wave
       setTimeout(() => {
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < count2; i++) {
           setTimeout(() => {
             const el = document.createElement('div');
             el.className = 'confetti';
