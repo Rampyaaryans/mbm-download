@@ -6,13 +6,17 @@
   <title>MBM - Download</title>
   <link rel="icon" type="image/png" href="mbm-logo.png">
   <link rel="apple-touch-icon" href="mbm-logo.png">
+  <!-- Preload heavy images so they start downloading before CSS/JS parse -->
+  <link rel="preload" as="image" href="bg.png" fetchpriority="high">
+  <link rel="preload" as="image" href="aku.png" fetchpriority="high">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       min-height: 100vh;
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0a0a0a;
+      /* Instant dark gradient placeholder — matches bg.png tones */
+      background: linear-gradient(135deg, #0a0c12 0%, #1a1020 30%, #0d1a1a 60%, #080a10 100%);
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -25,10 +29,19 @@
     .bg {
       position: fixed;
       inset: 0;
-      background: url('bg.png') center/cover no-repeat;
-      filter: brightness(0.4) saturate(1.2);
+      /* Placeholder gradient renders instantly; bg.png paints over it */
+      background: linear-gradient(135deg, #0a0c12, #1a1020, #0d1a1a, #080a10);
       z-index: 0;
     }
+    .bg img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.4) saturate(1.2);
+      /* Fade in once loaded */
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .bg img.loaded { opacity: 1; }
     .bg-overlay {
       position: fixed;
       inset: 0;
@@ -123,6 +136,11 @@
       box-shadow: 0 0 30px rgba(180,100,255,0.3);
       animation-delay: 0.5s;
     }
+    .circle-glow.green {
+      background: radial-gradient(circle, rgba(100,255,180,0.35) 0%, rgba(40,220,120,0.1) 50%, transparent 70%);
+      box-shadow: 0 0 30px rgba(100,255,180,0.3);
+      animation-delay: 1s;
+    }
     @keyframes glow-pulse {
       0%, 100% { transform: scale(1); opacity: 0.7; }
       50% { transform: scale(1.12); opacity: 1; }
@@ -143,6 +161,10 @@
     .circle-img.purple-border {
       border: 3px solid rgba(180,150,255,0.6);
       box-shadow: 0 0 20px rgba(180,100,255,0.3);
+    }
+    .circle-img.green-border {
+      border: 3px solid rgba(100,255,180,0.6);
+      box-shadow: 0 0 20px rgba(100,255,180,0.3);
     }
 
     /* ── Labels under circles ── */
@@ -206,18 +228,25 @@
     }
 
     /* ── Responsive stacking ── */
-    @media (max-width: 520px) {
+    @media (max-width: 700px) {
       .circles { gap: 30px; }
       .circle-wrap {
-        width: clamp(120px, 35vw, 150px);
-        height: clamp(120px, 35vw, 150px);
+        width: clamp(100px, 28vw, 140px);
+        height: clamp(100px, 28vw, 140px);
+      }
+    }
+    @media (max-width: 520px) {
+      .circles { gap: 24px; }
+      .circle-wrap {
+        width: clamp(90px, 25vw, 120px);
+        height: clamp(90px, 25vw, 120px);
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="bg"></div>
+  <div class="bg"><img src="bg.png" alt="" fetchpriority="high" onload="this.classList.add('loaded')"></div>
   <div class="bg-overlay"></div>
 
   <div class="content">
@@ -230,11 +259,11 @@
       <a class="aku-circle" href="MBM-arm64.apk" download="MBM-arm64.apk" onclick="celebrate()">
         <div class="circle-wrap">
           <div class="circle-glow pink"></div>
-          <img class="circle-img pink-border" src="aku.png" alt="Download for new phones" draggable="false">
+          <img class="circle-img pink-border" src="aku.png" alt="Download for new phones" draggable="false" fetchpriority="high">
         </div>
         <div class="circle-label">New Phones</div>
         <div class="circle-sub">64-bit (arm64)</div>
-        <div class="circle-size">44.6 MB</div>
+        <div class="circle-size">72.7 MB</div>
       </a>
 
       <div class="divider"></div>
@@ -243,11 +272,24 @@
       <a class="aku-circle" href="MBM-arm.apk" download="MBM-arm.apk" onclick="celebrate()">
         <div class="circle-wrap">
           <div class="circle-glow purple"></div>
-          <img class="circle-img purple-border" src="aku.png" alt="Download for old phones" draggable="false">
+          <img class="circle-img purple-border" src="aku.png" alt="Download for old phones" draggable="false" fetchpriority="high">
         </div>
         <div class="circle-label">Old Phones</div>
         <div class="circle-sub">32-bit (arm)</div>
-        <div class="circle-size">37.4 MB</div>
+        <div class="circle-size">70.8 MB</div>
+      </a>
+
+      <div class="divider"></div>
+
+      <!-- Web Version -->
+      <a class="aku-circle" href="https://mbmapp.pages.dev" target="_blank" rel="noopener" onclick="celebrate()">
+        <div class="circle-wrap">
+          <div class="circle-glow green"></div>
+          <img class="circle-img green-border" src="aku.png" alt="Open web version" draggable="false" fetchpriority="high">
+        </div>
+        <div class="circle-label">Web Version</div>
+        <div class="circle-sub">No install needed</div>
+        <div class="circle-size">mbmapp.pages.dev</div>
       </a>
     </div>
 
